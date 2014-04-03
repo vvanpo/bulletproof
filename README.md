@@ -38,3 +38,4 @@ Research and Links
 ---
 
 - [Keeping private GPG keys safe](https://alexcabal.com/creating-the-perfect-gpg-keypair/)
+- [Linux-PAM application dev's guide](http://www.linux-pam.org/Linux-PAM-html/Linux-PAM_ADG.html)
