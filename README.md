@@ -33,6 +33,7 @@ Existing technologies
     - Proprietary
     - No control over hosting or server-side encryption
 - [git-annex](https://git-annex.branchable.com/walkthrough/)
+- [Seahorse](https://wiki.gnome.org/Apps/Seahorse)
 
 Research and Links
 ---
