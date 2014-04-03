@@ -33,3 +33,8 @@ Existing technologies
     - Proprietary
     - No control over hosting or server-side encryption
 - [git-annex](https://git-annex.branchable.com/walkthrough/)
+
+Research and Links
+---
+
+- [Keeping private GPG keys safe](https://alexcabal.com/creating-the-perfect-gpg-keypair/)
