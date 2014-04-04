@@ -8,23 +8,18 @@ import (
     "code.google.com/p/go.exp/fsnotify"
 )
 
-// Directory and file name components. Relative paths require "." or ".." as the first element.
+// Directory and file name components
+// Relative paths require "." or ".." as the first element
 // e.g. {"home", "victor", "my-tracked-dir", "my-file"}
 //   or {"..", "my-tracked-dir", "my-file"}
 type path []string
 
+// String representation of path
 func (p path) String() string {
     return strings.Join(p, os.PathSeparator)
 }
 
-// tracked is a per-user structure of all tracked files and directories for that
-// user
-type tracked struct {
-    // Root directory
-    root path
-}
-
-// A representation of an inode
+// A representation of an inode, i.e. a unique file object
 type node struct {
     size []int64        // Size in bytes
     mode os.FileMode
@@ -33,29 +28,28 @@ type node struct {
 }
 
 // Represents a file, i.e. a link to an inode
-type link *node
-
-type symlink struct {
-    // The symlink's attributes
-    this link
-    // The linked file's path, either relative or absolute
-    pathname path
+type link struct {
+    // Base name
+    name string
+    *node
 }
 
-// The currently linked file of the symlink
-func (s *symlink) link() link {
-    p := s.path.abs()
-    return nil
+type dir struct {
+    // A directory is also just a link, but most systems don't support multi-linking directories and neither will we
+    name string
+    *node
+    files []link
+    // List of symlinks within this directory, mapping the symlink files themselves to a pathname
+    symlinks []map[link]path
 }
 
-func (f *file) name() {
-    os.filepath
-
-func (d *dir) addFile() {
-    return
+var fileTree struct {
+    // Root directory
+    root dir
+    // Absolute pathname to root
+    path
+    // Absolute pathnames mapping to fsnotify watcher objects
+    watchers map[path]fsnotify.Watcher
 }
 
-func searchAll(root dir) {
 
-    return
-}
