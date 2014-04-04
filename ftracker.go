@@ -1,10 +1,13 @@
-package ftracker
+package main
 
 import (
 	"code.google.com/p/go.exp/fsnotify"
 	"crypto/md5"
+    "gopkg.in/yaml.v1"
+    "io"
 	"os"
 	"path"
+    "strings"
 	"time"
 )
 
@@ -67,7 +70,20 @@ type Instance struct {
 // NewInstance sets up the data structure for the given path by reading the configuration files
 func NewInstance(p Path) *Instance {
 	i := new(Instance)
-	i.path = Path{"home", "victor"}
-	// readConfig()
+    i.root := new(dir)
+	b, err := yaml.Marshal(i)
+    print(err)
+    os.Create("example.yaml")
+
 	return i
+}
+
+func (i *Instance) AddPath(p Path) error {
+    return nil
+}
+
+func main() {
+    root := strings.Split(os.Args[1], "/")
+    i := NewInstance(root)
+    println(i)
 }
