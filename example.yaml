@@ -1,3 +1,4 @@
----
-Sync:
-    - .bashrc
+.bash_profile: "00000000000000000000000000000000"
+.bashrc: "00000000000000000000000000000000"
+.vimrc: -> home/victor
+Photos: {}
