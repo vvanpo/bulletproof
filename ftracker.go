@@ -4,7 +4,6 @@ import (
 	"code.google.com/p/go.exp/fsnotify"
 	"crypto/md5"
 	"fmt"
-	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"log"
 	"os"
@@ -20,15 +19,6 @@ type node struct {
 	seLinux string         // SELinux context, if one exists
 	hash    [md5.Size]byte // MD5 hash of file data
 	links   []*link        // Back-references to files.  This is ignored if node is a directory
-}
-
-func (n *node) GetYAML() (string, interface{}) {
-	var value [3]interface{}
-	value[0] = n.size
-	value[1] = fmt.Sprintf("%x", n.hash)
-	value[2] = n.modTime
-	// TODO:  file mode
-	return "!!seq", value
 }
 
 // Represents a file, i.e. a link to an inode
@@ -57,36 +47,6 @@ type dir struct {
 	dirs []dir
 }
 
-func (d *dir) GetYAML() (string, interface{}) {
-	value := make([]interface{}, len(d.files) + len(d.symlinks) + len(d.dirs))
-	i := 0
-	for _, l := range d.files {
-		value[i] = map[string]interface{}{l.name: l.node}
-		i++
-	}
-	for l, v := range d.symlinks {
-		value[i] = map[string]interface{}{l.name + " -> " + v: l.node}
-		i++
-	}
-	for _, ds := range d.dirs {
-		value[i] = map[string]interface{}{ds.name: ds}
-		i++
-	}
-	return "!!seq", value
-}
-
-func (d *dir) SetYAML(tag string, value interface{}) bool {
-	if v, ok := value.([]interface{}); ok {
-		for _, i := range v {
-			for k, t := range i.(map[interface{}]interface{}) {
-				fmt.Printf("%v\t%v\n", k, t)
-			}
-		}
-		return true
-	}
-	return false
-}
-
 // Per-instance file tree object
 type Session struct {
 	// Absolute pathname to root
@@ -95,14 +55,6 @@ type Session struct {
 	root *dir
 	// Absolute pathname mapping to fsnotify watcher objects
 	watchers map[string]fsnotify.Watcher
-}
-
-func (s *Session) GetYAML() (tag string, value interface{}) {
-	return "", s.root
-}
-
-func (s *Session) SetYAML(tag string, value interface{}) bool {
-	return s.root.SetYAML(tag, value)
 }
 
 // NewSession sets up the data structure for the given pathname by reading the configuration files in that path
@@ -119,7 +71,6 @@ func NewSession(pathname string) *Session {
 	s := new(Session)
 	s.pathname = pathname
 	s.root = new(dir)
-	err = yaml.Unmarshal(configFile, s)
 	if err != nil {
 		log.Fatal(err)
 	}
