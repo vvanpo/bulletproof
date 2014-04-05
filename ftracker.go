@@ -59,27 +59,6 @@ type Session struct {
 
 // NewSession sets up the data structure for the given pathname by reading the configuration files in that path
 func NewSession(pathname string) *Session {
-	configPath, err := filepath.Abs("config.yaml")
-	//configPath := filepath.Join(pathname, ".bp/config")
-	if err != nil {
-		log.Fatal(err)
-	}
-	configFile, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	s := new(Session)
-	s.pathname = pathname
-	s.root = new(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("\n\n%#v\n", s.root)
-	return s
+	return nil
 }
 
-func main() {
-	root := "/home/victor"
-	i := NewSession(root)
-	println(i)
-}
