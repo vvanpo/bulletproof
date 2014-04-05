@@ -1,12 +1,13 @@
 package filetracker
 
 import (
-	"os"
+	//"os"
 	"testing"
 )
 
 func TestNewSession(t *testing.T) {
-	pathname, _ := os.Getwd()
+//	pathname, _ := os.Getwd()
+	pathname := "/home/victor"
 	t.Logf("Using dir '%s'", pathname)
 	NewSession(pathname)
 }

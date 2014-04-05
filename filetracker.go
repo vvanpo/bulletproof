@@ -1,12 +1,10 @@
 package filetracker
 
 import (
-	"code.google.com/p/gcfg"
 	"code.google.com/p/go.exp/fsnotify"
 	"crypto/md5"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -47,21 +45,12 @@ type Session struct {
 }
 
 func NewSession(pathname string) *Session {
-	c, err := getConfig(pathname)
+	c, err := GetConfig(pathname)
 	if err != nil {
-		log.Fatalf("filetracker: failed to parse configuration file (%s)", err)
+		log.Fatalf("filetracker: failed to parse configuration file\n%s", err)
 	}
 	s := new(Session)
 	s.config = c
 	return s
 }
 
-type config struct {
-	trackedFiles []string
-}
-
-func getConfig(root string) (c *config, err error) {
-	pathname := filepath.Join(root, ".bp/config")
-	err = gcfg.ReadFileInto(c, pathname)
-	return
-}
