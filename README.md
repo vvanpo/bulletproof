@@ -7,6 +7,7 @@ Potential feature list
 		- Automatic folder organization?
 		- Camera imports
 	- Music tags, folder heirarchy
+	- Tracked file metadata VCS?  (using git object-store or sqlite)
 - Control and consistency of UNIX permissions
 - Transparent encryption/decryption
 	- Encfs/Fuse?
