@@ -5,11 +5,10 @@ import (
 	"crypto/md5"
 	"fmt"
 	"gopkg.in/yaml.v1"
-	"log"
 	"io/ioutil"
+	"log"
 	"os"
-	"path"
-	"strings"
+	"path/filepath"
 	"time"
 )
 
@@ -21,6 +20,15 @@ type node struct {
 	seLinux string         // SELinux context, if one exists
 	hash    [md5.Size]byte // MD5 hash of file data
 	links   []*link        // Back-references to files.  This is ignored if node is a directory
+}
+
+func (n *node) GetYAML() (string, interface{}) {
+	var value [3]interface{}
+	value[0] = n.size
+	value[1] = fmt.Sprintf("%x", n.hash)
+	value[2] = n.modTime
+	// TODO:  file mode
+	return "!!seq", value
 }
 
 // Represents a file, i.e. a link to an inode
@@ -37,15 +45,6 @@ func (l link) isSymlink() bool {
 	return false
 }
 
-func (l *link) GetYAML() (string, interface{}) {
-	value := make(map[string]interface{})
-	value["Size"] = l.node.size
-	value["Hash"] = fmt.Sprintf("%x", l.node.hash)
-	value["Modified"] = l.node.modTime
-	// TODO:  file mode
-	return "", value
-}
-
 type dir struct {
 	// A directory is also just a link, but most systems don't support multi-linking directories and neither will we
 	name string
@@ -59,54 +58,77 @@ type dir struct {
 }
 
 func (d *dir) GetYAML() (string, interface{}) {
-	value := make(map[string]interface{})
+	value := make([]interface{}, len(d.files) + len(d.symlinks) + len(d.dirs))
+	i := 0
 	for _, l := range d.files {
-		value[l.name] = l
+		value[i] = map[string]interface{}{l.name: l.node}
+		i++
 	}
 	for l, v := range d.symlinks {
-		value[l.name] = []interface{}{"-> " + v, l}
+		value[i] = map[string]interface{}{l.name + " -> " + v: l.node}
+		i++
 	}
 	for _, ds := range d.dirs {
-		value[ds.name] = []interface{}{ds.node, ds}
+		value[i] = map[string]interface{}{ds.name: ds}
+		i++
 	}
-	return "", value
+	return "!!seq", value
+}
+
+func (d *dir) SetYAML(tag string, value interface{}) bool {
+	if v, ok := value.([]interface{}); ok {
+		for _, i := range v {
+			for k, t := range i.(map[interface{}]interface{}) {
+				fmt.Printf("%v\t%v\n", k, t)
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // Per-instance file tree object
-type Instance struct {
+type Session struct {
 	// Absolute pathname to root
-	path string
+	pathname string
 	// Root directory
 	root *dir
 	// Absolute pathname mapping to fsnotify watcher objects
 	watchers map[string]fsnotify.Watcher
 }
 
-func (i *Instance) GetYAML() (string, interface{}) {
-	tag, value := i.root.GetYAML()
-	return tag, value
+func (s *Session) GetYAML() (tag string, value interface{}) {
+	return "", s.root
 }
 
-// NewInstance sets up the data structure for the given pathname by reading the configuration files in that path
-func NewInstance(path string) *Instance {
-	i := new(Instance)
-	i.path = path
-	i.root = new(dir)
-	b, err := ioutil.ReadFile(path)
+func (s *Session) SetYAML(tag string, value interface{}) bool {
+	return s.root.SetYAML(tag, value)
+}
+
+// NewSession sets up the data structure for the given pathname by reading the configuration files in that path
+func NewSession(pathname string) *Session {
+	configPath, err := filepath.Abs("config.yaml")
+	//configPath := filepath.Join(pathname, ".bp/config")
 	if err != nil {
-		log.Print(err)
+		log.Fatal(err)
 	}
-	var cfg map[string]interface{}
-	err = yaml.Unmarshal(b, &cfg)
+	configFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		log.Print(err)
+		log.Fatal(err)
 	}
-	fmt.Printf("%#v\n", cfg)
-	return i
+	s := new(Session)
+	s.pathname = pathname
+	s.root = new(dir)
+	err = yaml.Unmarshal(configFile, s)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("\n\n%#v\n", s.root)
+	return s
 }
 
 func main() {
 	root := "/home/victor"
-	i := NewInstance(root)
+	i := NewSession(root)
 	println(i)
 }
