@@ -1,15 +1,22 @@
 
-package filetracker
+package bp
 
 import (
+	"bufio"
+	"bytes"
+	"io/ioutil"
 	"path/filepath"
 )
 
-type Config struct {
+type config struct {
 }
 
-func GetConfig(root string) (*Config, error) {
+func getConfig(root string) (*config, error) {
 	pathname := filepath.Join(root, ".bp/config")
-	c := new(Config)
+	text, err := ioutil.ReadFile(pathname)
+	r := bytes.NewReader(text)
+	s := bufio.NewScanner(r)
+	err = s.Err()
+	c := new(config)
 	return c, err
 }

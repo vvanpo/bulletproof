@@ -1,4 +1,4 @@
-package filetracker
+package bp
 
 import (
 	"code.google.com/p/go.exp/fsnotify"
@@ -45,7 +45,7 @@ type Session struct {
 }
 
 func NewSession(pathname string) *Session {
-	c, err := GetConfig(pathname)
+	c, err := getConfig(pathname)
 	if err != nil {
 		log.Fatalf("filetracker: failed to parse configuration file\n%s", err)
 	}
