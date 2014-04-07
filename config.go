@@ -8,15 +8,30 @@ import (
 	"path/filepath"
 )
 
+const (
+	recursive int = 1 << iota
+	follow
+	dataOnly
+	metadataOnly
+	encrypt
+)
+
 type config struct {
+	sync map[string]struct{
+		path string
+		flags int
+	}
+	private map[string]struct{
+		path string
+		flags int
+	}
 }
 
-func getConfig(root string) (*config, error) {
-	pathname := filepath.Join(root, ".bp/config")
-	text, err := ioutil.ReadFile(pathname)
+func (s *Session) update() {
+	path := filepath.Join(s.root, ".bp/global")
+	text, err := ioutil.ReadFile(path)
 	r := bytes.NewReader(text)
-	s := bufio.NewScanner(r)
-	err = s.Err()
-	c := new(config)
-	return c, err
+	scanner := bufio.NewScanner(r)
+	err = scanner.Err()
+	return
 }

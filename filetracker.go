@@ -1,7 +1,6 @@
 package bp
 
 import (
-	"code.google.com/p/go.exp/fsnotify"
 	"crypto/md5"
 	"log"
 	"os"
@@ -30,27 +29,5 @@ type dir struct {
 	file []file
 	// List of sub-directories
 	subdir []dir
-}
-
-// Per-instance session object
-type Session struct {
-	// Absolute pathname to root
-	pathname string
-	// Root directory
-	root *dir
-	// Configuration structure
-	*config
-	// Absolute pathname mapping to fsnotify watcher objects
-	watchers map[string]fsnotify.Watcher
-}
-
-func NewSession(pathname string) *Session {
-	c, err := getConfig(pathname)
-	if err != nil {
-		log.Fatalf("filetracker: failed to parse configuration file\n%s", err)
-	}
-	s := new(Session)
-	s.config = c
-	return s
 }
 
