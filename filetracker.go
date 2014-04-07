@@ -2,7 +2,6 @@ package bp
 
 import (
 	"crypto/md5"
-	"log"
 	"os"
 	"time"
 )

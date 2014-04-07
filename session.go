@@ -3,6 +3,7 @@ package bp
 
 import (
 	"code.google.com/p/go.exp/fsnotify"
+	"code.google.com/p/go-uuid/uuid"
 )
 
 // Per-instance session object
@@ -17,7 +18,10 @@ type Session struct {
 
 func NewSession(pathname string) *Session {
 	s := new(Session)
-	s.config.update()
+	s.updateCfg()
 	return s
 }
 
+func (s *Session) updateObj(uuid uuid.UUID) {
+	return
+}
