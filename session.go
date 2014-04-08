@@ -3,7 +3,7 @@ package bp
 
 import (
 	"code.google.com/p/go.exp/fsnotify"
-	"code.google.com/p/go-uuid/uuid"
+//	"code.google.com/p/go-uuid/uuid"
 )
 
 // Per-instance session object
@@ -16,12 +16,9 @@ type Session struct {
 	watchers map[string]fsnotify.Watcher
 }
 
-func NewSession(pathname string) *Session {
+func NewSession(root string) *Session {
 	s := new(Session)
+	s.root = root
 	s.updateCfg()
 	return s
-}
-
-func (s *Session) updateObj(uuid uuid.UUID) {
-	return
 }
