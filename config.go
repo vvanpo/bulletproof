@@ -1,9 +1,14 @@
 
 // Schema for object store:
 // CREATE TABLE trusted (key TEXT PRIMARY KEY NOT NULL, alias TEXT);
-// CREATE TABLE object (uuid TEXT PRIMARY KEY NOT NULL, hash TEXT, modtime INTEGER);
-// CREATE TABLE global (path TEXT PRIMARY KEY NOT NULL, object TEXT REFERENCES object (uuid), flags INTEGER);
-// CREATE TABLE local (path TEXT UNIQUE, object TEXT REFERENCES object (uuid), flags INTEGER, override TEXT REFERENCES global (path) UNIQUE, CHECK (CASE WHEN path ISNULL THEN override NOTNULL END));
+// CREATE TABLE object (uuid TEXT PRIMARY KEY NOT NULL, hash TEXT, size INTEGER, modtime INTEGER);
+// CREATE TABLE global (path TEXT UNIQUE, object TEXT REFERENCES object (uuid), flags INTEGER, override TEXT UNIQUE,
+//					CHECK (CASE WHEN path ISNULL THEN override NOTNULL END),
+//					CHECK (override NOT IN (SELECT path FROM global)));
+// CREATE TABLE local (path TEXT UNIQUE, object TEXT REFERENCES object (uuid), flags INTEGER, override TEXT UNIQUE,
+//					CHECK (CASE WHEN path ISNULL THEN override NOTNULL END),
+//					CHECK (override NOT IN (SELECT path FROM local)));
+// CREATE VIEW files AS (SELECT path FROM global EXCEPT SELECT override AS path FROM local)
 package bp
 
 import (
