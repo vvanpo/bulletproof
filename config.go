@@ -3,6 +3,7 @@ package bp
 
 import (
 	"path/filepath"
+	"code.google.com/p/go-sqlite/go1/sqlite3"
 )
 
 // Object flags
@@ -23,6 +24,10 @@ type config struct {
 
 func (s *Session) updateCfg() error {
 	path := filepath.Join(s.root, ".bp/global")
+	c, err := sqlite3.Open(path)
+	defer c.Close()
+	if err != nil { return err }
+	
 	return nil
 }
 
