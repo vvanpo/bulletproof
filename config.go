@@ -1,4 +1,9 @@
 
+// Schema for object store:
+// CREATE TABLE trusted (key TEXT PRIMARY KEY NOT NULL, alias TEXT);
+// CREATE TABLE object (uuid TEXT PRIMARY KEY NOT NULL, hash TEXT, modtime INTEGER);
+// CREATE TABLE global (path TEXT PRIMARY KEY NOT NULL, object TEXT REFERENCES object (uuid), flags INTEGER);
+// CREATE TABLE local (path TEXT UNIQUE, object TEXT REFERENCES object (uuid), flags INTEGER, override TEXT REFERENCES global (path) UNIQUE, CHECK (CASE WHEN path ISNULL THEN override NOTNULL END));
 package bp
 
 import (
