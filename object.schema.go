@@ -6,9 +6,9 @@ func init() {
 	SCHEMA = `PRAGMA foreign_keys=ON;
 	BEGIN TRANSACTION;
 	CREATE TABLE trusted (key TEXT PRIMARY KEY NOT NULL, alias TEXT);
-	CREATE TABLE object (uuid TEXT PRIMARY KEY NOT NULL, size INTEGER NOT NULL,
+	CREATE TABLE object (uuid TEXT PRIMARY KEY NOT NULL, size INTEGER,
 			mode INTEGER NOT NULL, modtime INTEGER NOT NULL,
-			hash TEXT NOT NULL);
+			hash TEXT);
 	CREATE TABLE global (path TEXT UNIQUE, object TEXT REFERENCES object (uuid),
 			flags INTEGER, override TEXT UNIQUE,
 			CHECK (CASE WHEN path ISNULL THEN override NOTNULL END));

@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 	"testing"
-	"path/filepath"
 )
 
 var root string
@@ -32,16 +31,18 @@ func TestNewSession(t *testing.T) {
 	}
 }
 
-func TestNewDatabase(t *testing.T) {
+func TestCreateDatabase(t *testing.T) {
 	if len(os.Args) > 2 && root == os.Args[1] {
 		t.Skip("Skipping new database test to avoid overwriting real data.")
+	} else {
+		os.Remove("/tmp/.bp/object.db")
 	}
 	s := NewSession(root)
-	err := s.newDatabase()
+	err := s.createDatabase()
 	if err != nil {
 		t.Errorf("Database could not be created:\n%s", err)
 	}
-	path := filepath.Join(root, ".bp/object.db")
+	path := s.absolutePath(".bp/object.db")
 	cmd := exec.Command("/usr/bin/sqlite3", path, ".dump")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
