@@ -4,32 +4,35 @@ package bp
 import (
 	"code.google.com/p/go.exp/fsnotify"
 	"fmt"
+	"log"
+	"path/filepath"
 )
 
 // Per-instance session object
 type Session struct {
 	// Absolute pathname to root
 	root string
-	// Absolute pathname mapping to fsnotify watcher objects
-	watcher fsnotify.Watcher
+	// File watcher instance
+	watcher *fsnotify.Watcher
+	// List of watched paths
+	watch []string
 }
 
 func NewSession(root string) *Session {
 	s := new(Session)
 	s.root = root
+	var err error
 	s.watcher, err = fsnotify.NewWatcher()
-	s.updateConf()
+	if err != nil {
+		log.Fatalf("Failed to initialize inotify instance:\n%s", err)
+	}
 	return s
 }
 
-func (s *Session) setWatcher(path string) error {
-	_, exists := s.watchers[path]
-	if exists {
-		return fmt.Errorf("Watcher for file %s already exists", path)
+func (s *Session) addWatch(path string) error {
+	err := s.watcher.Watch(filepath.Join(s.root, path))
+	if err != nil {
+		return fmt.Errorf("fsnotify: %s", err)
 	}
-	w, err := fsnotify.NewWatcher()
-	if err != nil { return err }
-	err = w.Watch
-	s.watchers[path] = w
 	return nil
 }
