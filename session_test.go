@@ -7,37 +7,21 @@ import (
 )
 
 var root string
+var file string
+var s *Session
 
 func init() {
-	if len(os.Args) > 1 {
-		root = os.Args[1]
-	} else {
-		root = "/tmp"
-	}
-	return
+	root = "/tmp"
+	file = "testfile"
 }
 
 func TestNewSession(t *testing.T) {
-	var path string
-	//	path, _ := os.Getwd()
-	if len(os.Args) == 3 {
-		path = os.Args[2]
-	}
 	t.Logf("Using dir '%s'", root)
-	s := NewSession(root)
-	err := s.addWatch(path)
-	if err != nil {
-		t.Errorf("Watcher could not be set for '%s'.\n%s", path, err)
-	}
+	s = NewSession(root)
 }
 
 func TestCreateDatabase(t *testing.T) {
-	if len(os.Args) > 2 && root == os.Args[1] {
-		t.Skip("Skipping new database test to avoid overwriting real data.")
-	} else {
-		os.Remove("/tmp/.bp/object.db")
-	}
-	s := NewSession(root)
+	os.Remove(root + "/.bp/object.db")
 	err := s.createDatabase()
 	if err != nil {
 		t.Errorf("Database could not be created:\n%s", err)
@@ -49,5 +33,32 @@ func TestCreateDatabase(t *testing.T) {
 		t.Errorf("Error opening sqlite3: %s", err)
 	} else {
 		t.Logf("Schema output:\n%s", out)
+	}
+}
+
+func TestVerifyObject(t *testing.T) {
+	cmd := exec.Command("/bin/dd", "if=/dev/urandom", "of=" + root + "/" + file,
+				"count=1", "bs=10K")
+	err := cmd.Run()
+	if err != nil {
+		t.Errorf("Could not create temporary test file:\n%s", err)
+	}
+	err = s.addObject(file)
+	if err != nil {
+		t.Errorf("Failed to add object:\n%s", err)
+	} else {
+		o, err := s.getObject(file)
+		if err != nil {
+			t.Errorf("Failed to retrieve object:\n%s", err)
+		} else {
+			t.Logf("Object values:\n%v", o)
+		}
+	}
+}
+
+func TestNewWatch(t *testing.T) {
+	err := s.addWatch(file)
+	if err != nil {
+		t.Errorf("Watcher could not be set for '%s'.\n%s", file, err)
 	}
 }

@@ -11,8 +11,6 @@ import (
 type Session struct {
 	// Absolute pathname to root
 	root string
-	// Database
-	*db
 	// File watcher instance
 	watcher *fsnotify.Watcher
 	// List of watched paths
