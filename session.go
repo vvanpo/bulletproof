@@ -3,22 +3,33 @@ package bp
 
 import (
 	"code.google.com/p/go.exp/fsnotify"
-//	"code.google.com/p/go-uuid/uuid"
+	"fmt"
 )
 
 // Per-instance session object
 type Session struct {
 	// Absolute pathname to root
 	root string
-	// Configuration structure
-	config
 	// Absolute pathname mapping to fsnotify watcher objects
-	watchers map[string]fsnotify.Watcher
+	watcher fsnotify.Watcher
 }
 
 func NewSession(root string) *Session {
 	s := new(Session)
 	s.root = root
-	s.updateCfg()
+	s.watcher, err = fsnotify.NewWatcher()
+	s.updateConf()
 	return s
+}
+
+func (s *Session) setWatcher(path string) error {
+	_, exists := s.watchers[path]
+	if exists {
+		return fmt.Errorf("Watcher for file %s already exists", path)
+	}
+	w, err := fsnotify.NewWatcher()
+	if err != nil { return err }
+	err = w.Watch
+	s.watchers[path] = w
+	return nil
 }
