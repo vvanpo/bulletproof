@@ -1,4 +1,3 @@
-
 package bp
 
 // Scan the instance files listed in .bp/global and .bp/local, and verify
