@@ -12,13 +12,6 @@ import (
 	"time"
 )
 
-/*
-// Objects database
-type db struct {
-	// Convenience field, is always s.root + ".bp/object.db"
-	path string
-}*/
-
 func (s *Session) dbConn() (*sqlite3.Conn, error) {
 	return sqlite3.Open(s.absolutePath(".bp/object.db"))
 }
@@ -33,11 +26,11 @@ func (s *Session) createDatabase() error {
 	return nil
 }
 
-// object represents a unique file object (i.e. an inode)
+// object represents a unique file, directory or symlink
 type object struct {
-	size int64	// In bytes, only for regular files
 	mode os.FileMode
 	modTime time.Time
+	size int64	// Size in bytes, only for regular files
 	hash string	// Only for regular files
 }
 
@@ -49,7 +42,7 @@ const (
 	follow
 )
 
-// getObject grabs the values stored in the database for a specified path
+// getObject grabs the object values stored in the database for a specified path
 func (s *Session) getObject(path string) (o object, err error) {
 	c, err := s.dbConn()
 	if err != nil { return }
@@ -74,38 +67,26 @@ func (s *Session) getFile(path string) (o object, err error) {
 	return
 }
 
-// addPath grabs the file info from the specified path and stores it in the
-// database.  The local parameter determines which table it is to be stored in.
-func (s *Session) addPath(path string, local bool) error {
+// addGlobal adds a path to the global table
+func (s *Session) addGlobal(path string) error {
 	o, err := s.getFile(path)
 	if err != nil { return err }
 	c, err := s.dbConn()
 	if err != nil { return err }
 	defer c.Close()
 	// Ensure path doesn't already exist
+	q, err := c.Query("SELECT path, override FROM global LEFT JOIN local ON global.path != local.override OR global.override != local.path")
 
-
-	var uuid string
-	pathhash := sha1.Sum(path)
-	q, err := c.Query("SELECT path FROM files AS f INNER JOIN objects AS o ON f.object == o.uuid WHERE o.mode == ? && o.modtime == ?", int(o.mode), o.modTime.Unix())
 	for ; err == nil; err = q.Next() {
 		var p string
 		q.Scan(&p)
-		if os.Samefile(
-	}
-	if err == io.EOF {
-		// Need to add a new object
-		uuid = uuid.NewUUID().String()
-		if o.mode.IsRegular() {
-			err = c.Exec("INSERT INTO object VALUES (?, ?, ?, ?, ?, ?)",
-					uuid, pathhash, o.size, int(o.mode), o.modTime.Unix(), o.hash)
-		} else {
-			err = c.Exec("INSERT INTO object (uuid, id, mode, modtime) VALUES (?, ?, ?, ?)",
-					uuid, pathhash, int(o.mode), o.modTime.Unix())
+		if os.Samefile(os.Lstat(path), os.Lstat(p)) {
+			if !local {
+				// Update uuid of object
+				//updateObject()
+			}
+			break
 		}
-		return err
-	} else if err != nil {
-		return err
 	}
 }
 
