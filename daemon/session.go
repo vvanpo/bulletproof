@@ -4,6 +4,8 @@ import (
 	"github.com/vvanpo/bulletproof/object"
 	"code.google.com/p/go.exp/fsnotify"
 	"fmt"
+	"os"
+	"path/filepath"
 	"log"
 )
 
@@ -35,8 +37,8 @@ func newSession(root string) *session {
 }
 
 func (s *session) start() error {
-	return nil
-	// err = filepath.Walk(s.root, walk)
+	err := filpath.Walk(s.root, walkFn)
+	return err
 }
 
 func (s *session) addWatch(path string) error {
@@ -44,5 +46,10 @@ func (s *session) addWatch(path string) error {
 	if err != nil {
 		return fmt.Errorf("fsnotify: %s", err)
 	}
+	return nil
+}
+
+// walkFn visits every file, dir, and symlink in the s.root tree
+func walkFn(path string, info os.FileInfo, err error) error {
 	return nil
 }

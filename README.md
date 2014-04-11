@@ -46,3 +46,4 @@ Research and Links
 - [PAM bindings for Go](https://code.google.com/p/gopam/source/browse/)
 - [libev](http://software.schmorp.de/pkg/libev.html)
 - [Git object store](http://git-scm.com/book/en/Git-Internals-Git-Objects)
+- [User-mode NFS for Linux](https://github.com/nfs-ganesha/nfs-ganesha)
