@@ -43,7 +43,7 @@ func TestVerifyObject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not create temporary test file:\n%s", err)
 	}
-	err = s.addObject(file)
+	err = s.addObject(file, 0)
 	if err != nil {
 		t.Errorf("Failed to add object:\n%s", err)
 	} else {

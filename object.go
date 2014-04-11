@@ -67,8 +67,8 @@ func (s *Session) getObject(path string) (o object, err error) {
 	return
 }
 
-// addGlobal adds a path to the global table
-func (s *Session) addGlobal(path string, flags int) error {
+// addObject adds a path to the global table
+func (s *Session) addObject(path string, flags int) error {
 	o, err := s.getFile(path)
 	if err != nil { return err }
 	if o.mode & (os.ModeType &^ os.ModeDir &^ os.ModeSymlink) != 0 {
@@ -78,7 +78,7 @@ func (s *Session) addGlobal(path string, flags int) error {
 	if err != nil { return err }
 	defer c.Close()
 	uuid := uuid.NewUUID().String()
-	err = c.Exec("INSERT INTO global VALUES (?, ?, ?, ?, ?, ?, ?);", uuid, path, flags, o.mode, o.modTime, o.size, o.hash)
+	err = c.Exec("INSERT INTO global VALUES (?, ?, ?, ?, ?, ?, ?);", uuid, path, flags, int(o.mode), o.modTime.UnixNano(), o.size, o.hash)
 	return err
 }
 
