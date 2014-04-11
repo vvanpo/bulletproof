@@ -100,9 +100,6 @@ func (s *Session) verifyObject(path string) (bool, error) {
 	if err != nil { return false, err }
 	f, err := s.getFile(path)
 	if err != nil { return false, err }
-	if o != f {
-		return false, nil
-	}
-	return true, nil
+	return o.equal(f), nil
 }
 
