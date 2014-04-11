@@ -16,7 +16,7 @@ func init() {
 }
 
 func TestNewSession(t *testing.T) {
-	t.Logf("Using dir '%s'", root)
+	t.Logf("Using dir '%s'.", root)
 	s = NewSession(root)
 }
 
@@ -31,7 +31,6 @@ func TestCreateDatabase(t *testing.T) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Errorf("Error opening sqlite3: %s", err)
-	} else {
 		t.Logf("Schema output:\n%s", out)
 	}
 }
@@ -43,7 +42,11 @@ func TestVerifyObject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not create temporary test file:\n%s", err)
 	}
-	err = s.addObject(file, 0)
+	obj, err := s.getFile(file)
+	if err != nil {
+		t.Errorf("Could not stat file '%s':\n%s", file, err)
+	}
+	err = s.addObject(file, 0, obj)
 	if err != nil {
 		t.Errorf("Failed to add object:\n%s", err)
 	} else {
@@ -51,7 +54,10 @@ func TestVerifyObject(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to retrieve object:\n%s", err)
 		} else {
-			t.Logf("Object values:\n%v", o)
+			if !o.equal(obj) {
+				t.Errorf("Object inconsistent across add/retrieve.\n" +
+						"Values added:\n\t%v\nValues Retrieved:\n\t%v", obj, o)
+			}
 		}
 	}
 }
