@@ -5,26 +5,10 @@ import (
 	"code.google.com/p/go-sqlite/go1/sqlite3"
 	"crypto/md5"
 	"fmt"
-	"crypto/sha1"
 	"os"
-	"io"
 	"io/ioutil"
 	"time"
 )
-
-func (s *Session) dbConn() (*sqlite3.Conn, error) {
-	return sqlite3.Open(s.absolutePath(".bp/object.db"))
-}
-
-// createDatabase creates a new, empty object store
-func (s *Session) createDatabase() error {
-	c, err := s.dbConn()
-	if err != nil { return err }
-	defer c.Close()
-	err = c.Exec(SCHEMA)
-	if err != nil { return err }
-	return nil
-}
 
 // object represents a unique file, directory or symlink
 type object struct {
@@ -42,15 +26,6 @@ const (
 	follow
 )
 
-// getObject grabs the object values stored in the database for a specified path
-func (s *Session) getObject(path string) (o object, err error) {
-	c, err := s.dbConn()
-	if err != nil { return }
-	defer c.Close()
-	if err != nil { return }
-	return
-}
-
 // getFile grabs the object values from the live file
 func (s *Session) getFile(path string) (o object, err error) {
 	fi, err := os.Lstat(s.absolutePath(path))
@@ -67,27 +42,44 @@ func (s *Session) getFile(path string) (o object, err error) {
 	return
 }
 
-// addGlobal adds a path to the global table
-func (s *Session) addGlobal(path string) error {
-	o, err := s.getFile(path)
-	if err != nil { return err }
+func (s *Session) dbConn() (*sqlite3.Conn, error) {
+	c, err := sqlite3.Open(s.absolutePath(".bp/object.db"))
+	if err != nil { return nil, err }
+	return c, c.Exec("PRAGMA foreign_keys = ON;")
+}
+
+// createDatabase creates a new, empty object store
+func (s *Session) createDatabase() error {
 	c, err := s.dbConn()
 	if err != nil { return err }
 	defer c.Close()
-	// Ensure path doesn't already exist
-	q, err := c.Query("SELECT path, override FROM global LEFT JOIN local ON global.path != local.override OR global.override != local.path")
+	err = c.Exec(SCHEMA)
+	if err != nil { return err }
+	return nil
+}
 
-	for ; err == nil; err = q.Next() {
-		var p string
-		q.Scan(&p)
-		if os.Samefile(os.Lstat(path), os.Lstat(p)) {
-			if !local {
-				// Update uuid of object
-				//updateObject()
-			}
-			break
-		}
+// getObject grabs the object values stored in the database for a specified path
+func (s *Session) getObject(path string) (o object, err error) {
+	c, err := s.dbConn()
+	if err != nil { return }
+	defer c.Close()
+	if err != nil { return }
+	return
+}
+
+// addGlobal adds a path to the global table
+func (s *Session) addGlobal(path string, flags int) error {
+	o, err := s.getFile(path)
+	if err != nil { return err }
+	if o.mode & (os.ModeType &^ os.ModeDir &^ os.ModeSymlink) != 0 {
+		return fmt.Errorf("Cannot add irregular file '%s'.", path)
 	}
+	c, err := s.dbConn()
+	if err != nil { return err }
+	defer c.Close()
+	uuid := uuid.NewUUID().String()
+	err = c.Exec("INSERT INTO global VALUES (?, ?, ?, ?, ?, ?, ?);", uuid, path, flags, o.mode, o.modTime, o.size, o.hash)
+	return err
 }
 
 // verifyObject returns true if a the stored object data is consistent with the
