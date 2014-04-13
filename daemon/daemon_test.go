@@ -2,7 +2,10 @@ package main
 
 import (
 	"testing"
+	"github.com/vvanpo/bulletproof/object"
 )
+
+var _ object.Object		// FOR DEBUG
 
 var root string
 var file string

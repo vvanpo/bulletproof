@@ -24,8 +24,9 @@ type session struct {
 func newSession(root string) *session {
 	s := new(session)
 	s.root = root
+	os.Chdir(root)
 	var err error
-	s.store, err = object.CreateSqlite(root)
+	s.store, err = object.CreateSqlite()
 	if err != nil {
 		log.Fatalf("Failed to initialize object store:\n%s", err)
 	}
@@ -37,12 +38,12 @@ func newSession(root string) *session {
 }
 
 func (s *session) start() error {
-	err := filpath.Walk(s.root, walkFn)
+	err := filepath.Walk("", walkFn)
 	return err
 }
 
 func (s *session) addWatch(path string) error {
-	err := s.watcher.Watch(s.root + "/" + path)
+	err := s.watcher.Watch(path)
 	if err != nil {
 		return fmt.Errorf("fsnotify: %s", err)
 	}
@@ -51,5 +52,6 @@ func (s *session) addWatch(path string) error {
 
 // walkFn visits every file, dir, and symlink in the s.root tree
 func walkFn(path string, info os.FileInfo, err error) error {
+	fmt.Println(path)
 	return nil
 }

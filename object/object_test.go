@@ -13,6 +13,7 @@ var s ObjectStore
 func init() {
 	root = "/tmp"
 	file = "testfile"
+	os.Chdir(root)
 }
 
 func testFile() {
@@ -28,7 +29,7 @@ func testFile() {
 func TestCreateSqlite(t *testing.T) {
 	os.Remove(root + "/.bp/object.db")
 	var err error
-	s, err = CreateSqlite(root)
+	s, err = CreateSqlite()
 	if err != nil {
 		t.Errorf("Object store could not be created:\n%s", err)
 	}

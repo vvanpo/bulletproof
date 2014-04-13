@@ -46,21 +46,18 @@ type ObjectStore interface {
 }
 
 // Our implementation of ObjectStore uses sqlite as a back-end
-type Sqlite struct {
-	rootpath string
-}
+type Sqlite struct{}
 
 func (s *Sqlite) conn() (c *sqlite3.Conn, err error) {
-	c, err = sqlite3.Open(s.rootpath + "/.bp/object.db")
+	c, err = sqlite3.Open(".bp/object.db")
 	if err != nil { return }
 	return c, c.Exec("PRAGMA foreign_keys = ON;")
 }
 
 // CreateSqlite uses the provided directory to create a new, empty object store
 // ready for AddObject calls
-func CreateSqlite(path string) (*Sqlite, error) {
+func CreateSqlite() (*Sqlite, error) {
 	db := new(Sqlite)
-	db.rootpath = path
 	c, err := db.conn()
 	if err != nil {
 		return nil, err
@@ -75,7 +72,7 @@ func CreateSqlite(path string) (*Sqlite, error) {
 
 // StatObject queries the current object values from the filesystem
 func (s *Sqlite) StatObject(path string) (o Object, err error) {
-	fi, err := os.Lstat(s.rootpath + "/" + path)
+	fi, err := os.Lstat(path)
 	if err != nil {
 		return
 	}
@@ -84,7 +81,7 @@ func (s *Sqlite) StatObject(path string) (o Object, err error) {
 	if o.mode.IsRegular() {
 		o.size = fi.Size()
 		var buf []byte
-		buf, err = ioutil.ReadFile(s.rootpath + "/" + path)
+		buf, err = ioutil.ReadFile(path)
 		hash := md5.Sum(buf)
 		o.hash = fmt.Sprintf("%x", hash[:])
 	}
