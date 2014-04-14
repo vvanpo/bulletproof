@@ -27,11 +27,10 @@ func testFile() {
 }
 
 func TestCreateSqlite(t *testing.T) {
-	os.Remove(root + "/.bp/object.db")
 	var err error
 	s, err = CreateSqlite()
 	if err != nil {
-		t.Errorf("Object store could not be created:\n%s", err)
+		t.Fatalf("Object store could not be created:\n%s", err)
 	}
 	path := root + "/.bp/object.db"
 	cmd := exec.Command("/usr/bin/sqlite3", path, ".dump")
@@ -42,7 +41,7 @@ func TestCreateSqlite(t *testing.T) {
 	}
 }
 
-func TestAddView(t *testing.T) {
+func TestAddViewRemove(t *testing.T) {
 	testFile()
 	obj, err := s.StatObject(file)
 	if err != nil {
@@ -51,20 +50,24 @@ func TestAddView(t *testing.T) {
 	err = s.AddObject(file, 0, obj)
 	if err != nil {
 		t.Errorf("Failed to add object:\n%s", err)
+	}
+	o, err := s.ViewObject(file)
+	if err != nil {
+		t.Error(err)
 	} else {
-		o, err := s.ViewObject(file)
-		if err != nil {
-			t.Errorf("Failed to retrieve object:\n%s", err)
-		} else {
-			if !o.Equal(obj) {
-				t.Errorf("Object inconsistent across add/retrieve.\n"+
-					"Values added:\n\t%v\nValues Retrieved:\n\t%v", obj, o)
-			}
+		if !o.Equal(obj) {
+			t.Errorf("Object inconsistent across add/retrieve.\n"+
+				"Values added:\n\t%v\nValues Retrieved:\n\t%v", obj, o)
 		}
 	}
 }
 
 func TestVerifyObject(t *testing.T) {
+	obj, _ := s.StatObject(file)
+	err := s.AddObject(file, 0, obj)
+	if err != nil {
+		t.Errorf("Failed to add object:\n%s", err)
+	}
 	v, err := s.VerifyObject(file)
 	if !v || err != nil {
 		t.Error()
@@ -76,3 +79,7 @@ func TestVerifyObject(t *testing.T) {
 	}
 }
 
+func TestRemoveObject(t *testing.T) {
+	err := s.RemoveObject(file)
+	if err != nil { t.Errorf("Failed to remove object: %s", err) }
+}

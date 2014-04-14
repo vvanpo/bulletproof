@@ -6,8 +6,10 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"crypto/md5"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 	"path/filepath"
 )
@@ -39,6 +41,7 @@ const (
 // This interface is used to define the access methods to a particular object
 // store
 type ObjectStore interface {
+	VerifySchema() (bool, error)
 	StatObject(path string) (Object, error)
 	AddObject(path string, flags int, o Object) error
 	ViewObject(path string) (Object, error)
@@ -54,21 +57,22 @@ type Sqlite struct{
 func (s *Sqlite) conn() (c *sqlite3.Conn, err error) {
 	c, err = sqlite3.Open(s.file)
 	if err != nil { return }
-	return c, c.Exec("PRAGMA foreign_keys = ON;")
+	return c, c.Exec("PRAGMA foreign_keys = ON")
 }
 
-// CreateSqlite uses the provided directory to create a new, empty object store
-// ready for AddObject calls
+// CreateSqlite uses the provided directory to create a new object store ready
+// for AddObject calls
 func CreateSqlite() (*Sqlite, error) {
-	db := new(Sqlite)
-	db.file = ".bp/object.db"
-	_, err := os.Stat(db.file)
+	s := new(Sqlite)
+	s.file = ".bp/object.db"
+	_, err := os.Stat(s.file)
 	if err != nil {
-		os.MkdirAll(filepath.Split(db.file), 0755)
-	} else if VerifySchema() {
-		return fmt.Errorf("Database already exists.")
+		os.MkdirAll(filepath.Dir(s.file), 0755)
+	} else if v, err := s.VerifySchema(); v {
+		if err != nil { return nil, err }
+		return s, nil
 	}
-	c, err := db.conn()
+	c, err := s.conn()
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +81,25 @@ func CreateSqlite() (*Sqlite, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db, nil
+	return s, nil
+}
+
+// Verifies that the database exists and conforms to the schema outlined in
+// object.schema.go
+func (s *Sqlite) VerifySchema() (bool, error) {
+	c, err := s.conn()
+	if err != nil { return false, err }
+	defer c.Close()
+	t, e := c.Query(`SELECT sql FROM sqlite_master WHERE type == 'table' OR type == 'view';`)
+	for ; e == nil; e = t.Next() {
+		var sql string
+		err := t.Scan(&sql)
+		if err != nil { return false, err }
+		match := strings.Index(schema, sql)
+		if match < 0 { return false, err }
+	}
+	if e != io.EOF { return false, e }
+	return true, nil
 }
 
 // StatObject queries the current object values from the filesystem
@@ -104,12 +126,11 @@ func (s *Sqlite) AddObject(path string, flags int, o Object) error {
 		return fmt.Errorf("Cannot add irregular file '%s'.", path)
 	}
 	c, err := s.conn()
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 	defer c.Close()
 	uuid := uuid.NewUUID().String()
-	err = c.Exec("INSERT INTO global VALUES (?, ?, ?, ?, ?, ?, ?);", uuid, path, flags, int(o.mode), o.modTime.UnixNano(), o.size, o.hash)
+	err = c.Exec("INSERT INTO global VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, path, flags, int(o.mode), o.modTime.UnixNano(), o.size, o.hash)
+	if err != nil { return err }
 	return err
 }
 
@@ -126,11 +147,21 @@ func (s *Sqlite) ViewObject(path string) (o Object, err error) {
 		q.Scan(&mode, &modTime, &o.size, &o.hash)
 		o.mode = os.FileMode(mode)
 		o.modTime = time.Unix(0, modTime)
+	} else {
+		err = fmt.Errorf("Failed to retrieve object '%s'.", path)
 	}
 	return
 }
 
 func (s *Sqlite) RemoveObject(path string) error {
+	c, err := s.conn()
+	if err != nil { return err }
+	defer c.Close()
+	err = c.Exec("DELETE FROM global WHERE path == ?", path)
+	if err != nil { return err }
+	if c.RowsAffected() == 0 {
+		return fmt.Errorf("Object '%s' failed to be removed from table.", path)
+	}
 	return nil
 }
 
