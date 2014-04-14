@@ -27,3 +27,12 @@ func TestAddWatch(t *testing.T) {
 		t.Errorf("Watcher could not be set for '%s'.\n%s", file, err)
 	}
 }
+
+func TestStartSession(t *testing.T) {
+	o, err := s.store.StatObject(file)
+	err = s.store.AddObject(file, 0, o)
+	err = s.start()
+	if err != nil {
+		t.Error(err)
+	}
+}

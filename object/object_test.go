@@ -53,6 +53,13 @@ func TestRemoveObject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to add object:\n%s", err)
 	}
+}
+
+func TestIsObject(t *testing.T) {
+	b, err := s.IsObject(file)
+	if !b || err != nil {
+		t.Errorf("'%s' is not stored in database:\n%s", file, err)
+	}
 	err = s.RemoveObject(file)
 	if err != nil { t.Errorf("Failed to remove object:\n%s", err) }
 }

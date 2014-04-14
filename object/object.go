@@ -43,6 +43,7 @@ const (
 type ObjectStore interface {
 	VerifySchema() (bool, error)
 	StatObject(path string) (Object, error)
+	IsObject(path string) (bool, error)
 	AddObject(path string, flags int, o Object) error
 	ViewObject(path string) (Object, error)
 	RemoveObject(path string) error
@@ -118,6 +119,26 @@ func (s *Sqlite) StatObject(path string) (o Object, err error) {
 		o.hash = fmt.Sprintf("%x", hash[:])
 	}
 	return
+}
+
+// IsObject returns whether the specified path is in the object store
+func (s *Sqlite) IsObject(path string) (b bool, err error) {
+	c, err := s.conn()
+	if err != nil { return }
+	defer c.Close()
+	q, err := c.Query("SELECT count(*) FROM global WHERE path == ?", path)
+	if err == nil {
+		var count int
+		q.Scan(&count)
+		if count > 0 {
+			b = true
+		}
+		q.Close()
+	} else if err == io.EOF {
+		err = fmt.Errorf("Failed to retrieve object '%s'.", path)
+	}
+	return
+
 }
 
 // AddObject adds a path to be tracked to the store
