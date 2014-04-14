@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"path/filepath"
 )
 
 // Object represents a unique file, directory or symlink
@@ -46,10 +47,12 @@ type ObjectStore interface {
 }
 
 // Our implementation of ObjectStore uses sqlite as a back-end
-type Sqlite struct{}
+type Sqlite struct{
+	file string
+}
 
 func (s *Sqlite) conn() (c *sqlite3.Conn, err error) {
-	c, err = sqlite3.Open(".bp/object.db")
+	c, err = sqlite3.Open(s.file)
 	if err != nil { return }
 	return c, c.Exec("PRAGMA foreign_keys = ON;")
 }
@@ -58,6 +61,13 @@ func (s *Sqlite) conn() (c *sqlite3.Conn, err error) {
 // ready for AddObject calls
 func CreateSqlite() (*Sqlite, error) {
 	db := new(Sqlite)
+	db.file = ".bp/object.db"
+	_, err := os.Stat(db.file)
+	if err != nil {
+		os.MkdirAll(filepath.Split(db.file), 0755)
+	} else if VerifySchema() {
+		return fmt.Errorf("Database already exists.")
+	}
 	c, err := db.conn()
 	if err != nil {
 		return nil, err
