@@ -41,6 +41,22 @@ func TestCreateSqlite(t *testing.T) {
 	}
 }
 
+func TestRemoveObject(t *testing.T) {
+	err := s.RemoveObject(file)
+	if err != nil { t.Errorf("Failed to remove object:\n%s", err) }
+	testFile()
+	obj, err := s.StatObject(file)
+	if err != nil {
+		t.Errorf("Could not stat file '%s':\n%s", file, err)
+	}
+	err = s.AddObject(file, 0, obj)
+	if err != nil {
+		t.Errorf("Failed to add object:\n%s", err)
+	}
+	err = s.RemoveObject(file)
+	if err != nil { t.Errorf("Failed to remove object:\n%s", err) }
+}
+
 func TestAddViewRemove(t *testing.T) {
 	testFile()
 	obj, err := s.StatObject(file)
@@ -60,6 +76,8 @@ func TestAddViewRemove(t *testing.T) {
 				"Values added:\n\t%v\nValues Retrieved:\n\t%v", obj, o)
 		}
 	}
+	err = s.RemoveObject(file)
+	if err != nil { t.Errorf("Failed to remove object:\n%s", err) }
 }
 
 func TestVerifyObject(t *testing.T) {
@@ -69,17 +87,17 @@ func TestVerifyObject(t *testing.T) {
 		t.Errorf("Failed to add object:\n%s", err)
 	}
 	v, err := s.VerifyObject(file)
-	if !v || err != nil {
-		t.Error()
+	if !v {
+		if err != nil {
+			t.Error(err)
+		}
 	}
 	testFile()
 	v, err = s.VerifyObject(file)
-	if v || err != nil {
-		t.Error()
+	if v {
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }
 
-func TestRemoveObject(t *testing.T) {
-	err := s.RemoveObject(file)
-	if err != nil { t.Errorf("Failed to remove object: %s", err) }
-}

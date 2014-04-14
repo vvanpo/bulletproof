@@ -137,9 +137,7 @@ func (s *Sqlite) AddObject(path string, flags int, o Object) error {
 // ViewObject queries the store for the given path's object values
 func (s *Sqlite) ViewObject(path string) (o Object, err error) {
 	c, err := s.conn()
-	if err != nil {
-		return
-	}
+	if err != nil { return }
 	defer c.Close()
 	q, err := c.Query("SELECT mode, modtime, size, hash FROM global WHERE path == ?", path)
 	if err == nil {
@@ -147,7 +145,8 @@ func (s *Sqlite) ViewObject(path string) (o Object, err error) {
 		q.Scan(&mode, &modTime, &o.size, &o.hash)
 		o.mode = os.FileMode(mode)
 		o.modTime = time.Unix(0, modTime)
-	} else {
+		q.Close()
+	} else if err == io.EOF {
 		err = fmt.Errorf("Failed to retrieve object '%s'.", path)
 	}
 	return
