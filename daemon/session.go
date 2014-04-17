@@ -38,7 +38,8 @@ func newSession(root string) *session {
 }
 
 func (s *session) start() error {
-	err := filepath.Walk(".", s.walkFn())
+	// p = map[<path>]<consistent?>
+	p, err := s.store.VerifyAllObjects()
 	return err
 }
 
@@ -50,16 +51,3 @@ func (s *session) addWatch(path string) error {
 	return nil
 }
 
-// walkFn visits every file, dir, and symlink in the s.root tree
-func (s *session) walkFn() filepath.WalkFunc {
-	return func(path string, info os.FileInfo, err error) error {
-		b, err := s.store.IsObject(path)
-		if b {
-			o, err := s.store.ViewObject(path)
-
-		} else if info.IsDir() {
-			err = filepath.SkipDir
-		}
-		return err
-	}
-}

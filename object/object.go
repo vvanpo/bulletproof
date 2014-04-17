@@ -91,10 +91,10 @@ func (s *Sqlite) VerifySchema() (bool, error) {
 	c, err := s.conn()
 	if err != nil { return false, err }
 	defer c.Close()
-	t, e := c.Query(`SELECT sql FROM sqlite_master WHERE type == 'table' OR type == 'view';`)
-	for ; e == nil; e = t.Next() {
+	q, e := c.Query(`SELECT sql FROM sqlite_master WHERE type == 'table' OR type == 'view';`)
+	for ; e == nil; e = q.Next() {
 		var sql string
-		err := t.Scan(&sql)
+		err := q.Scan(&sql)
 		if err != nil { return false, err }
 		match := strings.Index(schema, sql)
 		if match < 0 { return false, err }
@@ -197,4 +197,25 @@ func (s *Sqlite) VerifyObject(path string) (bool, error) {
 		return false, err
 	}
 	return o.Equal(f), nil
+}
+
+// VerifyAllObjects returns a map of all paths in the database, with the value
+// being true or false depending on whether the stored object is consistent
+// with the live object
+func (s *Sqlite) VerifyAllObjects() (p map[string]bool, err error) {
+	c, err := s.conn()
+	if err != nil { return err }
+	defer c.Close()
+	q, e := c.Query("SELECT path FROM global")
+	for ; e == nil; e = q.Next() {
+		var path string
+		err = t.Scan(&path)
+		if err != nil { return nil, err }
+		if v, err := s.VerifyObject(path); v {
+			p[path] = true
+		} else {
+			p[path] = false
+		}
+	}
+	if e != io.EOF { return nil, e }
 }
