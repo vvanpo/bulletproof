@@ -17,8 +17,6 @@ type session struct {
 	store object.ObjectStore
 	// File watcher instance
 	watcher *fsnotify.Watcher
-	// Map of all watched paths to events
-	event map[string]*fsnotify.FileEvent
 }
 
 func newSession(root string) *session {
@@ -40,7 +38,16 @@ func newSession(root string) *session {
 func (s *session) start() error {
 	// p = map[<path>]<consistent?>
 	p, err := s.store.VerifyAllObjects()
-	return err
+	if err != nil { return err }
+	for k := range(p) {
+		if !p[i] {
+			err = s.inconsistent(k)
+			if err != nil { return err }
+		}
+		err = s.addWatch(k)
+		if err != nil { return err }
+	}
+	return nil
 }
 
 func (s *session) addWatch(path string) error {

@@ -36,6 +36,7 @@ const (
 	DataOnly
 	MetadataOnly
 	Follow
+	Lock
 )
 
 // This interface is used to define the access methods to a particular object
@@ -48,6 +49,7 @@ type ObjectStore interface {
 	ViewObject(path string) (Object, error)
 	RemoveObject(path string) error
 	VerifyObject(path string) (bool, error)
+	VerifyAllObjects() (p map[string]bool, err error)
 }
 
 // Our implementation of ObjectStore uses sqlite as a back-end
