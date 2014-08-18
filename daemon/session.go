@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/vvanpo/bulletproof/object"
-	"code.google.com/p/go.exp/fsnotify"
+	"gopkg.in/fsnotify.v0"
 	"fmt"
 	"os"
 	"path/filepath"
