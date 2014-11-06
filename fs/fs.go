@@ -1,7 +1,12 @@
 package main
 
 import (
+	"code.google.com/p/go.crypto/pbkdf2"
 	"code.google.com/p/rsc/fuse"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
+	"encoding/binary"
 	"flag"
 	"log"
 	"os"
@@ -16,6 +21,7 @@ func main() {
 	flag.Parse()
 	f := new(FS)
 	master := path.Clean(flag.Arg(1))
+	f.authenticate([]byte("password"))
 	if master == "." {
 		log.Fatal("Missing file")
 	}
@@ -27,8 +33,12 @@ func main() {
 		log.Fatal("Invalid file")
 	}
 	var err error
-	f.fd, err = os.OpenFile(master, os.O_RDWR, 0)
+	f.File, err = os.OpenFile(master, os.O_RDWR, 0)
 	if err != nil {
+		log.Fatal(err)
+	}
+	// TODO password
+	if err = f.authenticate([]byte("password")); err != nil {
 		log.Fatal(err)
 	}
 	c, err := fuse.Mount(mountPoint)
@@ -40,13 +50,35 @@ func main() {
 	}
 }
 
-type FS struct{
-	fd *os.File			// master file descriptor
+type FS struct {
+	*os.File // master file descriptor
+	superBlock
+	ciph cipher.AEAD
+}
+
+type superBlock struct {
+	salt []byte
 }
 
 // validate ensures the master file is a valid filesystem
 func (f FS) validate() bool {
+	// TODO random salt
+	salt := int64(1234)
+	binary.PutVarint(f.salt, salt)
 	return true
+}
+
+func (f *FS) authenticate(pass []byte) (err error) {
+	key := pbkdf2.Key(pass, f.salt, 4096, 32, sha256.New)
+	ciph, err := aes.NewCipher(key)
+	if err != nil {
+		return
+	}
+	f.ciph, err = cipher.NewGCM(ciph)
+	if err != nil {
+		return
+	}
+	return nil
 }
 
 func (FS) Root() (fuse.Node, fuse.Error) {
@@ -72,4 +104,3 @@ type Node struct {
 func (n *Node) Attr() fuse.Attr {
 	return n.attr
 }
-
