@@ -11,7 +11,6 @@ Potential feature list
 - Control and consistency of UNIX permissions
 - Transparent encryption/decryption
 	- Encfs/Fuse?
-		- Fully contained within ~/.bulletproof
 	- Password-protected folders, integrated with PAM, integrated with password managers like pass?
 - Rsync-able files, block encryption on said files compatible with rsync protocol
 - P2P, a la btsync ?
