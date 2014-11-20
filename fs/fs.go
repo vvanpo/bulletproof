@@ -52,24 +52,16 @@ func main() {
 
 type FS struct {
 	*os.File // master file descriptor
-	superBlock
 	ciph cipher.AEAD
-}
-
-type superBlock struct {
-	salt []byte
 }
 
 // validate ensures the master file is a valid filesystem
 func (f FS) validate() bool {
-	// TODO random salt
-	salt := int64(1234)
-	binary.PutVarint(f.salt, salt)
 	return true
 }
 
 func (f *FS) authenticate(pass []byte) (err error) {
-	key := pbkdf2.Key(pass, f.salt, 4096, 32, sha256.New)
+	key := pbkdf2.Key(pass, nil, 4096, 32, sha256.New)
 	ciph, err := aes.NewCipher(key)
 	if err != nil {
 		return
@@ -81,7 +73,8 @@ func (f *FS) authenticate(pass []byte) (err error) {
 	return nil
 }
 
-func (FS) Root() (fuse.Node, fuse.Error) {
+func (f *FS) Root() (fuse.Node, fuse.Error) {
+	b := readBlock(0)
 	return nil, nil
 }
 

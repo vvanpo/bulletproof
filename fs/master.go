@@ -7,7 +7,7 @@ import (
 	//"os"
 )
 
-const BLOCKSIZE = 4096
+const BLOCKSIZE = 4096 // In bytes
 
 func (f *FS) readBlock(n int64) (b []byte, err error) {
 	_, err = f.ReadAt(b, n*BLOCKSIZE)
